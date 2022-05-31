@@ -1,6 +1,7 @@
 // group 23
 
-var renderer, material, rocketship, mesh, scene, camera, camera1, camera2, camera3, date;
+var renderer, material, mesh, scene, camera, camera1, camera2, camera3, date, clock;
+var rocketship, planet;
 
 // each empty array represents one semi hemisphere
 var objects = [[], [], [], []];
@@ -79,10 +80,7 @@ function createRocketship(x, y, z) {
     
     
     rocketship.position.setFromSpherical(spherical);
-    
-    const semiHemisphere = whichSemiHemisphere(phi, theta);
-    objects[semiHemisphere].push(rocketship);
-    scene.add(rocketship);
+
 
     scene.add(rocketship);
 }
@@ -168,7 +166,7 @@ function createCone(color) {
 function createPlanet(color) {
     'use strict';
 
-    var planet = new THREE.Object3D();
+    planet = new THREE.Object3D();
 
     const geometry = new THREE.SphereGeometry(r);
     const material = new THREE.MeshBasicMaterial({
@@ -177,10 +175,15 @@ function createPlanet(color) {
     });
     const mesh = new THREE.Mesh(geometry, material);
 
+    
     planet.add(mesh);
-
+    planet.add(rocketship);
     objects.push(planet);
     scene.add(planet);
+
+    planet.position.x = 0;
+    planet.position.y = 0;
+    planet.position.z = 0;
 }
 
 function createIcosahedron(color) {
@@ -270,7 +273,7 @@ function createScene() {
     scene = new THREE.Scene();
 
     createPlanet(0xffffff);
-    createRocketship(0, 8 ,0);
+    createRocketship(0, 0 , 0);
 
     for (let i = 0; i < 5; i++) {
         createCone(0xffffff);
@@ -388,6 +391,7 @@ function onResize() {
 function init() {
     'use strict';
 
+    clock = new THREE.Clock();
     renderer = new THREE.WebGLRenderer({
         antialias: true
     });
@@ -430,8 +434,13 @@ function update() {
         });
         wireframe = false;
     }
-    date = Date.now() * 0.001;
-    rocketship.position.set(Math.cos(date) * r*1.2, Math.cos(date) * r*1.2, Math.sin(date) * r*1.2);
+    var delta = clock.getDelta();
+    var elapsed = clock.elapsedTime;
+
+    rocketship.position.x = planet.position.x + Math.sin(elapsed*2) * r *1.2;
+    rocketship.position.z = planet.position.z + Math.cos(elapsed*2) * r *1.2;
+    rocketship.rotation.x += delta;
+    rocketship.rotation.z += 0.2 * delta;
 }
 
 function animate() {
