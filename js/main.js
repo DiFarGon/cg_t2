@@ -1,6 +1,6 @@
 // group 23
 
-var renderer, scene, camera, camera1, camera2, camera3;
+var renderer, material, rocketship, mesh, scene, camera, camera1, camera2, camera3, date;
 
 // each empty array represents one semi hemisphere
 var objects = [[], [], [], []];
@@ -32,6 +32,59 @@ function whichSemiHemisphere(phi, theta) {
         return 2;
     }
     return 3;
+}
+
+function addRocketshipLeg(obj, x, y, z) {
+    'use strict';
+
+    const geometry = new THREE.CapsuleGeometry( 2, 5, 4, 8 );
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, z);
+    obj.add(mesh);
+}
+
+function addRocketshipTop(obj, x, y, z) {
+    'use strict';
+    const geometry = new THREE.CylinderGeometry( 1, 6, 10, 32 );
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y + 20, z);
+    obj.add(mesh);
+}
+
+function addRocketshipBody(obj, x, y, z) {
+    'use strict';
+    const geometry = new THREE.CylinderGeometry( 6, 6, 30, 32 );
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, z);
+    obj.add(mesh);
+}
+
+function createRocketship(x, y, z) {
+    'use strict';
+    
+    rocketship = new THREE.Object3D();
+    
+    material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: false });
+    var phi = randomValue(angleMin, angleMax);
+    var theta = randomValue(angleMin, angleMax);
+
+    var spherical = new THREE.Spherical(r * 1.2, phi, theta);
+   
+    addRocketshipTop(rocketship, 0, 0, 0);
+    addRocketshipLeg(rocketship, -8, -10, 0);
+    addRocketshipLeg(rocketship, 8, -10, 0);
+    addRocketshipLeg(rocketship, 0, -10, 8);
+    addRocketshipLeg(rocketship, 0, -10, -8);
+    addRocketshipBody(rocketship, 0, 0, 0);
+    
+    
+    rocketship.position.setFromSpherical(spherical);
+    
+    const semiHemisphere = whichSemiHemisphere(phi, theta);
+    objects[semiHemisphere].push(rocketship);
+    scene.add(rocketship);
+
+    scene.add(rocketship);
 }
 
 function createTetrahedron(color) {
@@ -172,6 +225,7 @@ function createBox(color) {
         color: color,
         wireframe: false
     });
+
     const mesh = new THREE.Mesh(geometry, material);
 
     box.add(mesh);
@@ -208,12 +262,15 @@ function createDodecahedron(color) {
     scene.add(dodecahedron);
 }
 
+
+
 function createScene() {
     'use strict';
 
     scene = new THREE.Scene();
 
     createPlanet(0xffffff);
+    createRocketship(0, 8 ,0);
 
     for (let i = 0; i < 5; i++) {
         createCone(0xffffff);
@@ -373,6 +430,8 @@ function update() {
         });
         wireframe = false;
     }
+    date = Date.now() * 0.001;
+    rocketship.position.set(Math.cos(date) * r*1.2, Math.cos(date) * r*1.2, Math.sin(date) * r*1.2);
 }
 
 function animate() {
