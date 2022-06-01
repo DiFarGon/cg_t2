@@ -1,13 +1,13 @@
 // group 23
 
-var renderer, material, mesh, scene, camera, camera1, camera2, camera3, date, clock;
+var renderer, scene, camera, camera1, camera2, camera3, date, clock;
 var rocketship, planet;
 
 // each empty array represents one semi hemisphere
 var objects = [[], [], [], []];
 
 const r = 100;
-// const h = TODO: spaceship
+// const h = TODO: rocketship
 const cMax = r / 20;
 const cMin = r / 24;
 
@@ -16,6 +16,10 @@ const angleMax = 2 * Math.PI;
 
 var wireframe = false;
 
+// rocketship movement controls
+var longitude, latitude, zenith, azimuth;
+const velocity = 0.01;
+
 function randomValue(min, max) {
     'use strict';
 
@@ -23,6 +27,8 @@ function randomValue(min, max) {
 }
 
 function whichSemiHemisphere(phi, theta) {
+    'use strict';
+
     if (phi < Math.PI) {
         if (theta < Math.PI) {
             return 0;
@@ -35,54 +41,69 @@ function whichSemiHemisphere(phi, theta) {
     return 3;
 }
 
-function addRocketshipLeg(obj, x, y, z) {
+function addRocketshipLeg(obj, color, x, y, z) {
     'use strict';
 
-    const geometry = new THREE.CapsuleGeometry( 2, 5, 4, 8 );
-    mesh = new THREE.Mesh(geometry, material);
+    const geometry = new THREE.CapsuleGeometry(2, 5, 4, 8);
+    const material = new THREE.MeshBasicMaterial({
+        color: color,
+        wireframe: false
+    });
+    const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     obj.add(mesh);
 }
 
-function addRocketshipTop(obj, x, y, z) {
+function addRocketshipTop(obj, color, x, y, z) {
     'use strict';
-    const geometry = new THREE.CylinderGeometry( 1, 6, 10, 32 );
-    mesh = new THREE.Mesh(geometry, material);
+
+    const geometry = new THREE.CylinderGeometry(1, 6, 10, 32);
+    const material = new THREE.MeshBasicMaterial({
+        color: color,
+        wireframe: false
+    });
+    const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y + 20, z);
     obj.add(mesh);
 }
 
-function addRocketshipBody(obj, x, y, z) {
+function addRocketshipBody(obj, color, x, y, z) {
     'use strict';
-    const geometry = new THREE.CylinderGeometry( 6, 6, 30, 32 );
-    mesh = new THREE.Mesh(geometry, material);
+
+    const geometry = new THREE.CylinderGeometry(6, 6, 30, 32);
+    const material = new THREE.MeshBasicMaterial({
+        color: color,
+        wireframe: false
+    });
+    const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     obj.add(mesh);
 }
 
-function createRocketship(x, y, z) {
+function createRocketship(color) {
     'use strict';
     
     rocketship = new THREE.Object3D();
-    
-    material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: false });
-    var phi = randomValue(angleMin, angleMax);
-    var theta = randomValue(angleMin, angleMax);
+    rocketship.userData = {
+        phi: randomValue(angleMin, angleMax),
+        theta: randomValue(angleMin, angleMax)
+    };
 
-    var spherical = new THREE.Spherical(r * 1.2, phi, theta);
+    var spherical = new THREE.Spherical(r * 1.2, rocketship.userData.phi, rocketship.userData.theta);
    
-    addRocketshipTop(rocketship, 0, 0, 0);
-    addRocketshipLeg(rocketship, -8, -10, 0);
-    addRocketshipLeg(rocketship, 8, -10, 0);
-    addRocketshipLeg(rocketship, 0, -10, 8);
-    addRocketshipLeg(rocketship, 0, -10, -8);
-    addRocketshipBody(rocketship, 0, 0, 0);
-    
+    addRocketshipTop(rocketship, 0x00ff00, 0, 0, 0);
+    addRocketshipLeg(rocketship, 0x00ff00, -8, -10, 0);
+    addRocketshipLeg(rocketship, 0x00ff00, 8, -10, 0);
+    addRocketshipLeg(rocketship, 0x00ff00, 0, -10, 8);
+    addRocketshipLeg(rocketship, 0x00ff00, 0, -10, -8);
+    addRocketshipBody(rocketship, 0x00ff00, 0, 0, 0);
     
     rocketship.position.setFromSpherical(spherical);
-
+    rocketship.rotation.x = rocketship.userData.theta - Math.PI / 2;
+    rocketship.rotation.z = rocketship.userData.phi - Math.PI / 2;
 
     scene.add(rocketship);
+    objects.push(rocketship);
 }
 
 function createTetrahedron(color) {
@@ -175,9 +196,7 @@ function createPlanet(color) {
     });
     const mesh = new THREE.Mesh(geometry, material);
 
-    
     planet.add(mesh);
-    planet.add(rocketship);
     objects.push(planet);
     scene.add(planet);
 
@@ -265,15 +284,13 @@ function createDodecahedron(color) {
     scene.add(dodecahedron);
 }
 
-
-
 function createScene() {
     'use strict';
 
     scene = new THREE.Scene();
 
     createPlanet(0xffffff);
-    createRocketship(0, 0 , 0);
+    createRocketship(0, 0, 0);
 
     for (let i = 0; i < 5; i++) {
         createCone(0xffffff);
@@ -305,11 +322,12 @@ function createScene() {
 function createCameras() {
     'use strict';
     
-    camera1 = new THREE.OrthographicCamera(-200, 200, -200, 200, 1, 1000);
+    camera1 = new THREE.OrthographicCamera(200, -200, 200, -200, 1, 1000);
+    camera1.position.set(-300, 0, -300);
     camera1.lookAt(scene.position);
 
     camera2 = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 1, 1000);
-    camera2.position.set(0, 0, -300);
+    camera2.position.set(-300, 0, -300);
     camera2.lookAt(scene.position);
 
     // camera3 = new THREE.PerspectiveCamera();
@@ -319,7 +337,7 @@ function onKeyDown(e) {
     'use strict';
 
     switch (e.keyCode) {
-        // spaceship movement controls
+        // rocketship movement controls
         case 37: // left arrow
             longitude = true;
             break;
@@ -342,7 +360,7 @@ function onKeyUp(e) {
     'use strict';
 
     switch (e.keyCode) {
-        // spaceship movement controls
+        // rocketship movement controls
         case 37: // left arrow
             longitude = false;
             break;
@@ -364,7 +382,7 @@ function onKeyUp(e) {
             camera = camera2;
             break;
         case 51: // 3
-            camera = camera3;
+            // camera = camera3;
             break;
 
         // switch wireframe mode
@@ -434,13 +452,54 @@ function update() {
         });
         wireframe = false;
     }
-    var delta = clock.getDelta();
-    var elapsed = clock.elapsedTime;
 
-    rocketship.position.x = planet.position.x + Math.sin(elapsed*2) * r *1.2;
-    rocketship.position.z = planet.position.z + Math.cos(elapsed*2) * r *1.2;
-    rocketship.rotation.x += delta;
-    rocketship.rotation.z += 0.2 * delta;
+    if (longitude) {
+        rocketship.userData.theta += velocity;
+        rocketship.position.setFromSpherical(new THREE.Spherical(
+            r * 1.2,
+            rocketship.userData.phi,
+            rocketship.userData.theta
+        ));
+        rocketship.rotation.x = rocketship.userData.theta - Math.PI / 2;
+        rocketship.rotation.z = rocketship.userData.phi - Math.PI;
+    }
+    if (azimuth) {
+        rocketship.userData.theta -= velocity;
+        rocketship.position.setFromSpherical(new THREE.Spherical(
+            r * 1.2,
+            rocketship.userData.phi,
+            rocketship.userData.theta
+        ));
+        rocketship.rotation.x = rocketship.userData.theta - Math.PI / 2;
+        rocketship.rotation.z = rocketship.userData.phi - Math.PI;
+    }
+    if (latitude) {
+        rocketship.userData.phi += velocity;
+        rocketship.position.setFromSpherical(new THREE.Spherical(
+            r * 1.2,
+            rocketship.userData.phi,
+            rocketship.userData.theta
+        ));
+        rocketship.rotation.x = rocketship.userData.theta - Math.PI / 2;
+        rocketship.rotation.z = rocketship.userData.phi - Math.PI;
+    }
+    if (zenith) {
+        rocketship.userData.phi -= velocity;
+        rocketship.position.setFromSpherical(new THREE.Spherical(
+            r * 1.2,
+            rocketship.userData.phi,
+            rocketship.userData.theta
+        ));
+        rocketship.rotation.x = rocketship.userData.theta - Math.PI / 2;
+        rocketship.rotation.z = rocketship.userData.phi - Math.PI;
+    }
+    // var delta = clock.getDelta();
+    // var elapsed = clock.elapsedTime;
+
+    // rocketship.position.x = planet.position.x + Math.sin(elapsed*2) * r *1.2;
+    // rocketship.position.z = planet.position.z + Math.cos(elapsed*2) * r *1.2;
+    // rocketship.rotation.x += delta;
+    // rocketship.rotation.z += 0.2 * delta;
 }
 
 function animate() {
