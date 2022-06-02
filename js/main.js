@@ -31,13 +31,13 @@ function randomValue(min, max) {
 function whichSemiHemisphere(phi, theta) {
     'use strict';
 
-    if (phi < Math.PI) {
-        if (theta < Math.PI) {
+    if (Math.sin(phi) > 0) {
+        if (Math.cos(theta) > 0) {
             return 0;
         }
         return 1;
     }
-    if (theta < Math.PI) {
+    if (Math.cos(theta) > 0) {
         return 2;
     }
     return 3;
@@ -87,8 +87,8 @@ function createRocketship() {
     
     rocketship = new THREE.Object3D();
     rocketship.userData = {
-        phi: randomValue(angleMin, angleMax),
-        theta: randomValue(angleMin, angleMax),
+        phi: 0.1,
+        theta: 0.1,
         hitRadius: h / 2
     };
 
@@ -104,8 +104,32 @@ function createRocketship() {
     rocketship.position.setFromSpherical(spherical);
     rocketship.lookAt(planet.position);
 
+    const axes = new THREE.AxesHelper(20);
+    rocketship.add(axes);
+
     scene.add(rocketship);
     objects.push(rocketship);
+}
+
+function createPlanet(color) {
+    'use strict';
+
+    planet = new THREE.Object3D();
+
+    const geometry = new THREE.SphereGeometry(r);
+    const material = new THREE.MeshBasicMaterial({
+        color: color,
+        wireframe: false
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+
+    planet.add(mesh);
+    objects.push(planet);
+    scene.add(planet);
+
+    planet.position.x = 0;
+    planet.position.y = 0;
+    planet.position.z = 0;
 }
 
 function createTetrahedron(color) {
@@ -190,27 +214,6 @@ function createCone(color) {
     const semiHemisphere = whichSemiHemisphere(phi, theta);
     objects[semiHemisphere].push(cone);
     scene.add(cone);
-}
-
-function createPlanet(color) {
-    'use strict';
-
-    planet = new THREE.Object3D();
-
-    const geometry = new THREE.SphereGeometry(r);
-    const material = new THREE.MeshBasicMaterial({
-        color: color,
-        wireframe: false
-    });
-    const mesh = new THREE.Mesh(geometry, material);
-
-    planet.add(mesh);
-    objects.push(planet);
-    scene.add(planet);
-
-    planet.position.x = 0;
-    planet.position.y = 0;
-    planet.position.z = 0;
 }
 
 function createIcosahedron(color) {
@@ -329,6 +332,8 @@ function createScene() {
     for (let i = 0; i < 3; i++) {
         createIcosahedron(0x0000ff);
     }
+
+    scene.add(new THREE.AxesHelper(150));
 }
 
 function createCameras() {
@@ -339,10 +344,12 @@ function createCameras() {
     camera1.lookAt(scene.position);
 
     camera2 = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 1, 1000);
-    camera2.position.set(300, 0, 0);
+    camera2.position.set(-300, 0, 0);
     camera2.lookAt(scene.position);
 
-    // camera3 = new THREE.PerspectiveCamera();
+    camera3 = new THREE.PerspectiveCamera(90, innerWidth / innerHeight, 1, 1000);
+    camera3.position.set(10, -20, 0);
+    camera3.lookAt(rocketship.position.x, rocketship.position.y, rocketship.position.z);
 }
 
 function onKeyDown(e) {
@@ -394,7 +401,7 @@ function onKeyUp(e) {
             camera = camera2;
             break;
         case 51: // 3
-            // camera = camera3;
+            camera = camera3;
             break;
 
         // switch wireframe mode
@@ -434,6 +441,7 @@ function init() {
 
     createScene();
     createCameras();
+    rocketship.add(camera3);
 
     camera = camera1;
 
@@ -460,7 +468,6 @@ function checkForCollisions(semiHemisphere) {
     'use strict';
 
     for (var i = 0; i < objects[semiHemisphere].length; i++) {
-        console.log(checkCollision(objects[semiHemisphere][i]));
         if (checkCollision(objects[semiHemisphere][i])) {
             scene.remove(objects[semiHemisphere][i]);
             objects[semiHemisphere].splice(i, 1);
@@ -490,6 +497,15 @@ function removeHitbox(object) {
     object.remove(object.userData.hitbox);
 }
 
+function calculateMovement(angle, velocity) {
+    'use strict';
+
+    if (angle + velocity < 0) {
+        return 2 * Math.PI + (angle + velocity);
+    }
+    return (angle + velocity) % (2 * Math.PI);
+}
+
 function update() {
     'use strict';
 
@@ -498,6 +514,9 @@ function update() {
         objects.forEach(function(element) {
             if (element instanceof THREE.Object3D) {
                 element.children.forEach(function(mesh) {
+                    if (mesh instanceof THREE.Camera) {
+                        return;
+                    }
                     mesh.material.wireframe = !mesh.material.wireframe;
                 });
                 return;
@@ -513,44 +532,44 @@ function update() {
 
     // rocketship movement
     if (longitude) {
-        rocketship.userData.theta = (rocketship.userData.theta - velocity) % (2 * Math.PI);
+        rocketship.userData.theta = calculateMovement(rocketship.userData.theta, velocity);
         rocketship.position.setFromSpherical(new THREE.Spherical(
             r * 1.2,
             rocketship.userData.phi,
             rocketship.userData.theta
         ));
         rocketship.lookAt(planet.position);
-        rocketship.rotation.z = - Math.PI / 2;
+        // rocketship.rotation.z = - Math.PI / 2;
     }
     if (azimuth) {
-        rocketship.userData.theta = (rocketship.userData.theta + velocity) % (2 * Math.PI);
+        rocketship.userData.theta = calculateMovement(rocketship.userData.theta, - velocity);
         rocketship.position.setFromSpherical(new THREE.Spherical(
             r * 1.2,
             rocketship.userData.phi,
             rocketship.userData.theta
         ));
         rocketship.lookAt(planet.position);
-        rocketship.rotation.z = Math.PI / 2;
+        // rocketship.rotation.z = Math.PI / 2;
     }
     if (latitude) {
-        rocketship.userData.phi = (rocketship.userData.phi - velocity) % (2 * Math.PI);
+        rocketship.userData.phi = calculateMovement(rocketship.userData.phi, - velocity);
         rocketship.position.setFromSpherical(new THREE.Spherical(
             r * 1.2,
             rocketship.userData.phi,
             rocketship.userData.theta
         ));
         rocketship.lookAt(planet.position);
-        rocketship.rotation.z = 0;
+        // rocketship.rotation.z = 0;
     }
     if (zenith) {
-        rocketship.userData.phi = (rocketship.userData.phi + velocity) % (2 * Math.PI);
+        rocketship.userData.phi = calculateMovement(rocketship.userData.phi, velocity);
         rocketship.position.setFromSpherical(new THREE.Spherical(
             r * 1.2,
             rocketship.userData.phi,
             rocketship.userData.theta
         ));
         rocketship.lookAt(planet.position);
-        rocketship.rotation.z = Math.PI;
+        // rocketship.rotation.z = Math.PI;
     }
 
     // hiding and showing object hitboxes
@@ -583,7 +602,6 @@ function update() {
 
     // collisions logic
     const semiHemisphere = whichSemiHemisphere(rocketship.userData.phi, rocketship.userData.theta);
-    console.log(semiHemisphere);
     checkForCollisions(semiHemisphere);
 
     // var delta = clock.getDelta();
