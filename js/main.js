@@ -22,22 +22,27 @@ var showHitbox = false, showHitboxChanged = false;
 var longitude, latitude, zenith, azimuth;
 const velocity = 0.01;
 
+const colors = [0xffffff, 0xff0000, 0x00ff00, 0x0000ff];
+
 function randomValue(min, max) {
     'use strict';
 
     return Math.random() * (max - min) + min;
 }
 
-function whichSemiHemisphere(phi, theta) {
+function whichSemiHemisphere(object) {
     'use strict';
 
-    if (Math.sin(phi) > 0) {
-        if (Math.cos(theta) > 0) {
+    const phi = object.userData.phi;
+    const theta = object.userData.theta;
+
+    if (phi < Math.PI) {
+        if (theta < Math.PI) {
             return 0;
         }
         return 1;
     }
-    if (Math.cos(theta) > 0) {
+    if (theta < Math.PI) {
         return 2;
     }
     return 3;
@@ -140,14 +145,16 @@ function createTetrahedron(color) {
     var c = randomValue(cMax, cMin);
     tetrahedron.userData = {hitRadius: c};
 
-    var phi = randomValue(angleMin, angleMax);
-    var theta = randomValue(angleMin, angleMax);
-
-    var spherical = new THREE.Spherical(r * 1.2, phi, theta);
-
+    tetrahedron.userData.phi = randomValue(angleMin, angleMax);
+    tetrahedron.userData.theta = randomValue(angleMin, angleMax);
+    
+    var spherical = new THREE.Spherical(r * 1.2, tetrahedron.userData.phi, tetrahedron.userData.theta);
+    
+    const semiHemisphere = whichSemiHemisphere(tetrahedron);
+    
     const geometry = new THREE.TetrahedronGeometry(c);
     const material = new THREE.MeshBasicMaterial({
-        color: color,
+        color: colors[semiHemisphere],
         wireframe: false
     });
     const mesh = new THREE.Mesh(geometry, material);
@@ -155,7 +162,6 @@ function createTetrahedron(color) {
     tetrahedron.add(mesh);
     tetrahedron.position.setFromSpherical(spherical);
 
-    const semiHemisphere = whichSemiHemisphere(phi, theta);
     objects[semiHemisphere].push(tetrahedron);
     scene.add(tetrahedron);
 }
@@ -168,14 +174,16 @@ function createOctahedron(color) {
     var c = randomValue(cMax, cMin);
     octahedron.userData = {hitRadius: c};
 
-    var phi = randomValue(angleMin, angleMax);
-    var theta = randomValue(angleMin, angleMax);
-
-    var spherical = new THREE.Spherical(r * 1.2, phi, theta);
-
+    octahedron.userData.phi = randomValue(angleMin, angleMax);
+    octahedron.userData.theta = randomValue(angleMin, angleMax);
+    
+    var spherical = new THREE.Spherical(r * 1.2, octahedron.userData.phi, octahedron.userData.theta);
+    
+    const semiHemisphere = whichSemiHemisphere(octahedron);
+    
     const geometry = new THREE.OctahedronGeometry(c);
     const material = new THREE.MeshBasicMaterial({
-        color: color,
+        color: colors[semiHemisphere],
         wireframe: false
     });
     const mesh =  new THREE.Mesh(geometry, material);
@@ -183,7 +191,6 @@ function createOctahedron(color) {
     octahedron.add(mesh);
     octahedron.position.setFromSpherical(spherical);
     
-    const semiHemisphere = whichSemiHemisphere(phi, theta);
     objects[semiHemisphere].push(octahedron);
     scene.add(octahedron);
 }
@@ -196,14 +203,16 @@ function createCone(color) {
     var c = randomValue(cMax, cMin);
     cone.userData = {hitRadius: c};
 
-    var phi = randomValue(angleMin, angleMax);
-    var theta = randomValue(angleMin, angleMax);
-
-    var spherical = new THREE.Spherical(r * 1.2, phi, theta);
+    cone.userData.phi = randomValue(angleMin, angleMax);
+    cone.userData.theta = randomValue(angleMin, angleMax);
+    
+    var spherical = new THREE.Spherical(r * 1.2, cone.userData.phi, cone.userData.theta);
+    
+    const semiHemisphere = whichSemiHemisphere(cone);
     
     const geometry = new THREE.ConeGeometry(c, c);
     const material = new THREE.MeshBasicMaterial({
-        color: color,
+        color: colors[semiHemisphere],
         wireframe: false
     });
     const mesh = new THREE.Mesh(geometry, material);
@@ -211,7 +220,6 @@ function createCone(color) {
     cone.add(mesh);
     cone.position.setFromSpherical(spherical);
 
-    const semiHemisphere = whichSemiHemisphere(phi, theta);
     objects[semiHemisphere].push(cone);
     scene.add(cone);
 }
@@ -224,14 +232,16 @@ function createIcosahedron(color) {
     var c = randomValue(cMax, cMin);
     icosahedron.userData = {hitRadius: c};
 
-    var phi = randomValue(angleMin, angleMax);
-    var theta = randomValue(angleMin, angleMax);
-
-    var spherical = new THREE.Spherical(r * 1.2, phi, theta);
-
+    icosahedron.userData.phi = randomValue(angleMin, angleMax);
+    icosahedron.userData.theta = randomValue(angleMin, angleMax);
+    
+    var spherical = new THREE.Spherical(r * 1.2, icosahedron.userData.phi, icosahedron.userData.theta);
+    
+    const semiHemisphere = whichSemiHemisphere(icosahedron);
+    
     const geometry = new THREE.IcosahedronGeometry(c);
     const material = new THREE.MeshBasicMaterial({
-        color: color,
+        color: colors[semiHemisphere],
         wireframe: false
     });
     const mesh = new THREE.Mesh(geometry, material);
@@ -239,7 +249,6 @@ function createIcosahedron(color) {
     icosahedron.add(mesh);
     icosahedron.position.setFromSpherical(spherical);
 
-    const semiHemisphere = whichSemiHemisphere(phi, theta);
     objects[semiHemisphere].push(icosahedron);
     scene.add(icosahedron);
 }
@@ -252,14 +261,16 @@ function createBox(color) {
     var c = randomValue(cMax, cMin);
     box.userData = {hitRadius: c};
 
-    var phi = randomValue(angleMin, angleMax);
-    var theta = randomValue(angleMin, angleMax);
+    box.userData.phi = randomValue(angleMin, angleMax);
+    box.userData.theta = randomValue(angleMin, angleMax);
 
-    var spherical = new THREE.Spherical(r * 1.2, phi, theta);
-
+    var spherical = new THREE.Spherical(r * 1.2, box.userData.phi, box.userData.theta);
+    
+    const semiHemisphere = whichSemiHemisphere(box);
+    
     const geometry = new THREE.BoxGeometry(c, c, c);
     const material = new THREE.MeshBasicMaterial({
-        color: color,
+        color: colors[semiHemisphere],
         wireframe: false
     });
 
@@ -268,7 +279,6 @@ function createBox(color) {
     box.add(mesh);
     box.position.setFromSpherical(spherical);
 
-    const semiHemisphere = whichSemiHemisphere(phi, theta);
     objects[semiHemisphere].push(box);
     scene.add(box);
 }
@@ -281,14 +291,16 @@ function createDodecahedron(color) {
     var c = randomValue(cMax, cMin);
     dodecahedron.userData = {hitRadius: c};
 
-    var phi = randomValue(angleMin, angleMax);
-    var theta = randomValue(angleMin, angleMax);
-
-    var spherical = new THREE.Spherical(r * 1.2, phi, theta);
-
+    dodecahedron.userData.phi = randomValue(angleMin, angleMax);
+    dodecahedron.userData.theta = randomValue(angleMin, angleMax);
+    
+    var spherical = new THREE.Spherical(r * 1.2, dodecahedron.userData.phi, dodecahedron.userData.theta);
+    
+    const semiHemisphere = whichSemiHemisphere(dodecahedron);
+    
     const geometry = new THREE.DodecahedronGeometry(c);
     const material = new THREE.MeshBasicMaterial({
-        color: color,
+        color: colors[semiHemisphere],
         wireframe: false
     });
     const mesh = new THREE.Mesh(geometry, material);
@@ -296,7 +308,6 @@ function createDodecahedron(color) {
     dodecahedron.add(mesh);
     dodecahedron.position.setFromSpherical(spherical);
 
-    const semiHemisphere = whichSemiHemisphere(phi, theta);
     objects[semiHemisphere].push(dodecahedron);
     scene.add(dodecahedron);
 }
@@ -601,7 +612,7 @@ function update() {
     }
 
     // collisions logic
-    const semiHemisphere = whichSemiHemisphere(rocketship.userData.phi, rocketship.userData.theta);
+    const semiHemisphere = whichSemiHemisphere(rocketship);
     checkForCollisions(semiHemisphere);
 
     // var delta = clock.getDelta();
