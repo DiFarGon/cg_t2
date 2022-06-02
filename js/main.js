@@ -7,7 +7,7 @@ var rocketship, planet;
 var objects = [[], [], [], []];
 
 const r = 100;
-// const h = TODO: rocketship
+const h = 10; // TODO
 const cMax = r / 20;
 const cMin = r / 24;
 
@@ -86,7 +86,8 @@ function createRocketship(color) {
     rocketship = new THREE.Object3D();
     rocketship.userData = {
         phi: randomValue(angleMin, angleMax),
-        theta: randomValue(angleMin, angleMax)
+        theta: randomValue(angleMin, angleMax),
+        hitRadius: h
     };
 
     var spherical = new THREE.Spherical(r * 1.2, rocketship.userData.phi, rocketship.userData.theta);
@@ -454,13 +455,13 @@ function checkCollision(object) {
 function checkForCollisions(semiHemisphere) {
     'use strict';
 
-    var collisionList = [];
-
-    objects[semiHemisphere].forEach(function(object) {
-        if (checkCollision(object)) {
-            collisionList.push(object);
+    for (var i = 0; i < objects[semiHemisphere].length; i++) {
+        console.log(checkCollision(objects[semiHemisphere][i]));
+        if (checkCollision(objects[semiHemisphere][i])) {
+            scene.remove(objects[semiHemisphere][i]);
+            objects[semiHemisphere].splice(i, 1);
         }
-    });
+    }
 }
 
 function update() {
