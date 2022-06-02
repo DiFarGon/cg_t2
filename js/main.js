@@ -99,8 +99,6 @@ function createRocketship(color) {
     addRocketshipBody(rocketship, 0x00ff00, 0, 0, 0);
     
     rocketship.position.setFromSpherical(spherical);
-    rocketship.rotation.x = rocketship.userData.theta - Math.PI / 2;
-    rocketship.rotation.z = rocketship.userData.phi - Math.PI / 2;
 
     scene.add(rocketship);
     objects.push(rocketship);
@@ -112,6 +110,8 @@ function createTetrahedron(color) {
     var tetrahedron = new THREE.Object3D();
 
     var c = randomValue(cMax, cMin);
+    tetrahedron.userData = {hitRadius: c};
+
     var phi = randomValue(angleMin, angleMax);
     var theta = randomValue(angleMin, angleMax);
 
@@ -138,6 +138,8 @@ function createOctahedron(color) {
     var octahedron = new THREE.Object3D();
 
     var c = randomValue(cMax, cMin);
+    octahedron.userData = {hitRadius: c};
+
     var phi = randomValue(angleMin, angleMax);
     var theta = randomValue(angleMin, angleMax);
 
@@ -164,6 +166,8 @@ function createCone(color) {
     var cone = new THREE.Object3D();
 
     var c = randomValue(cMax, cMin);
+    cone.userData = {hitRadius: c};
+
     var phi = randomValue(angleMin, angleMax);
     var theta = randomValue(angleMin, angleMax);
 
@@ -211,6 +215,8 @@ function createIcosahedron(color) {
     var icosahedron = new THREE.Object3D();
 
     var c = randomValue(cMax, cMin);
+    icosahedron.userData = {hitRadius: c};
+
     var phi = randomValue(angleMin, angleMax);
     var theta = randomValue(angleMin, angleMax);
 
@@ -237,6 +243,8 @@ function createBox(color) {
     var box = new THREE.Object3D();
 
     var c = randomValue(cMax, cMin);
+    box.userData = {hitRadius: c};
+
     var phi = randomValue(angleMin, angleMax);
     var theta = randomValue(angleMin, angleMax);
 
@@ -264,6 +272,8 @@ function createDodecahedron(color) {
     var dodecahedron = new THREE.Object3D();
 
     var c = randomValue(cMax, cMin);
+    dodecahedron.userData = {hitRadius: c};
+
     var phi = randomValue(angleMin, angleMax);
     var theta = randomValue(angleMin, angleMax);
 
@@ -323,11 +333,11 @@ function createCameras() {
     'use strict';
     
     camera1 = new THREE.OrthographicCamera(200, -200, 200, -200, 1, 1000);
-    camera1.position.set(-300, 0, -300);
+    camera1.position.set(300, 0, 0);
     camera1.lookAt(scene.position);
 
     camera2 = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 1, 1000);
-    camera2.position.set(-300, 0, -300);
+    camera2.position.set(300, 0, 0);
     camera2.lookAt(scene.position);
 
     // camera3 = new THREE.PerspectiveCamera();
@@ -432,6 +442,27 @@ function render() {
     renderer.render(scene, camera);
 }
 
+function checkCollision(object) {
+    'use strict';
+
+    return (rocketship.userData.hitRadius + object.userData.hitRadius) ** 2 >= 
+            (rocketship.position.x - object.position.x) ** 2 + 
+            (rocketship.position.y - object.position.y) ** 2 +
+            (rocketship.position.z - object.position.z) ** 2;
+}
+
+function checkForCollisions(semiHemisphere) {
+    'use strict';
+
+    var collisionList = [];
+
+    objects[semiHemisphere].forEach(function(object) {
+        if (checkCollision(object)) {
+            collisionList.push(object);
+        }
+    });
+}
+
 function update() {
     'use strict';
 
@@ -454,45 +485,45 @@ function update() {
     }
 
     if (longitude) {
-        rocketship.userData.theta += velocity;
+        rocketship.userData.theta = (rocketship.userData.theta - velocity) % (2 * Math.PI);
         rocketship.position.setFromSpherical(new THREE.Spherical(
             r * 1.2,
             rocketship.userData.phi,
             rocketship.userData.theta
         ));
-        rocketship.rotation.x = rocketship.userData.theta - Math.PI / 2;
-        rocketship.rotation.z = rocketship.userData.phi - Math.PI;
+        rocketship.rotation.z = - Math.PI / 2;
     }
     if (azimuth) {
-        rocketship.userData.theta -= velocity;
+        rocketship.userData.theta = (rocketship.userData.theta + velocity) % (2 * Math.PI);
         rocketship.position.setFromSpherical(new THREE.Spherical(
             r * 1.2,
             rocketship.userData.phi,
             rocketship.userData.theta
         ));
-        rocketship.rotation.x = rocketship.userData.theta - Math.PI / 2;
-        rocketship.rotation.z = rocketship.userData.phi - Math.PI;
+        rocketship.rotation.z = Math.PI / 2;
     }
     if (latitude) {
-        rocketship.userData.phi += velocity;
+        rocketship.userData.phi = (rocketship.userData.phi - velocity) % (2 * Math.PI);
         rocketship.position.setFromSpherical(new THREE.Spherical(
             r * 1.2,
             rocketship.userData.phi,
             rocketship.userData.theta
         ));
-        rocketship.rotation.x = rocketship.userData.theta - Math.PI / 2;
-        rocketship.rotation.z = rocketship.userData.phi - Math.PI;
+        rocketship.rotation.z = 0;
     }
     if (zenith) {
-        rocketship.userData.phi -= velocity;
+        rocketship.userData.phi = (rocketship.userData.phi + velocity) % (2 * Math.PI);
         rocketship.position.setFromSpherical(new THREE.Spherical(
             r * 1.2,
             rocketship.userData.phi,
             rocketship.userData.theta
         ));
-        rocketship.rotation.x = rocketship.userData.theta - Math.PI / 2;
-        rocketship.rotation.z = rocketship.userData.phi - Math.PI;
+        rocketship.rotation.z = Math.PI;
     }
+    rocketship.rotation.y = rocketship.userData.theta;
+
+    const semiHemisphere = whichSemiHemisphere(rocketship.userData.phi, rocketship.userData.theta);
+    checkForCollisions(semiHemisphere);
     // var delta = clock.getDelta();
     // var elapsed = clock.elapsedTime;
 
