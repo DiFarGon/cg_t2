@@ -22,7 +22,10 @@ var showHitbox = false, showHitboxChanged = false;
 var longitude, latitude, zenith, azimuth;
 const velocity = 0.01;
 
-const colors = [0xffffff, 0xff0000, 0x00ff00, 0x0000ff];
+const keyLime =0xedf67d, orchidCrayola = 0xf896d8,
+      heliotrope = 0xca7df9, majorelleBlue = 0x724cf9, darkSlateBlue = 0x564592;
+
+const colors = [keyLime, orchidCrayola, heliotrope, majorelleBlue, darkSlateBlue];
 
 function randomValue(min, max) {
     'use strict';
@@ -100,12 +103,12 @@ function createRocketship() {
 
     var spherical = new THREE.Spherical(r * 1.2, rocketship.userData.phi, rocketship.userData.theta);
    
-    addRocketshipTop(rocketship, 0x00ff00, 0, (9 * h / 10) / 2, 0);
-    addRocketshipLeg(rocketship, 0x00ff00, - (h / 6), - h / 3, 0);
-    addRocketshipLeg(rocketship, 0x00ff00, (h / 6), - h / 3, 0);
-    addRocketshipLeg(rocketship, 0x00ff00, 0, - h / 3, (h / 6));
-    addRocketshipLeg(rocketship, 0x00ff00, 0, - h / 3, - (h / 6));
-    addRocketshipBody(rocketship, 0x00ff00, 0, 0, 0);
+    addRocketshipTop(rocketship, heliotrope, 0, (9 * h / 10) / 2, 0);
+    addRocketshipLeg(rocketship, heliotrope, - (h / 6), - h / 3, 0);
+    addRocketshipLeg(rocketship, heliotrope, (h / 6), - h / 3, 0);
+    addRocketshipLeg(rocketship, heliotrope, 0, - h / 3, (h / 6));
+    addRocketshipLeg(rocketship, heliotrope, 0, - h / 3, - (h / 6));
+    addRocketshipBody(rocketship, orchidCrayola, 0, 0, 0);
     
     rocketship.position.setFromSpherical(spherical);
 
@@ -317,38 +320,47 @@ function createScene() {
 
     scene = new THREE.Scene();
 
-    createPlanet(0xffffff);
+    createPlanet(darkSlateBlue);
     createRocketship();
 
+    var randomColor;
+
     for (let i = 0; i < 5; i++) {
-        createCone(0x0000ff);
+        randomColor = colors[Math.floor(randomValue(0, colors.length - 1))];
+        createCone(randomColor);
     }
 
     for (let i = 0; i < 3; i++) {
-        createTetrahedron(0x0000ff);
+        randomColor = colors[Math.floor(randomValue(0, colors.length - 1))];
+        createTetrahedron(randomColor);
     }
 
     for (let i = 0; i < 3; i++) {
-        createOctahedron(0x0000ff);
+        randomColor = colors[Math.floor(randomValue(0, colors.length - 1))];
+        createOctahedron(randomColor);
     }
 
     for (let i = 0; i < 4; i++) {
-        createBox(0x0000ff);
+        randomColor = colors[Math.floor(randomValue(0, colors.length - 1))];
+        createBox(randomColor);
     }
 
     for (let i = 0; i < 2; i++) {
-        createDodecahedron(0x0000ff);
+        randomColor = colors[Math.floor(randomValue(0, colors.length - 1))];
+        createDodecahedron(randomColor);
     }
 
     for (let i = 0; i < 3; i++) {
-        createIcosahedron(0x0000ff);
+        randomColor = colors[Math.floor(randomValue(0, colors.length - 1))];
+        createIcosahedron(randomColor);
     }
 }
 
 function createCameras() {
     'use strict';
     
-    camera1 = new THREE.OrthographicCamera(200, -200, 200, -200, 1, 1000);
+    camera1 = new THREE.OrthographicCamera(-200, 200, 200, -200, 1, 1000);
+    camera1.position.set(-300, 0, 0);
     camera1.lookAt(scene.position);
 
     camera2 = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 1, 1000);
